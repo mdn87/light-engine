@@ -26,7 +26,7 @@ def discover(timeout: float = 4.0) -> list[dict]:
                     device = parsed["msg"]["data"]
                     device["ip"] = address[0]
                     seen[device.get("device", address[0])] = device
-            except (socket.timeout, ValueError, KeyError, TypeError):
+            except (TimeoutError, ValueError, KeyError, TypeError):
                 continue
     return list(seen.values())
 
