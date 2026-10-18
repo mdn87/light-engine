@@ -26,6 +26,8 @@ Official local UDP data path:
 - JSON envelope: {"msg":{"cmd":"brightness","data":{"value":55}}}
 - Color is colorwc with RGB fields and colorTemInKelvin: 0
 - Brightness uses 1..100; power uses turn value 0/1
+- devStatus (empty data) to IP:4003 is answered on client UDP 4002 with onOff, brightness, color, colorTemInKelvin; replies are matched to requests by source IP
+- Nothing is acknowledged. Per the protocol notes, a command arriving directly behind two others can be dropped silently, so the transport spaces every send to one device by LIGHT_ENGINE_COMMAND_GAP_MS (default 25 ms)
 
 Real hardware support must be verified with firmware and Govee Home LAN toggle; no speculative undocumented frame formats. Color and brightness are independent commands, which constrains effective timing. Start near 3 frame updates/sec/device then measure and adapt; this is a conservative provisional policy, not a documented maximum. Avoid overclaiming 30 FPS.
 
@@ -48,4 +50,6 @@ HA is ideal for sensors, automation and general device management, but is not th
 
 ## Not yet implemented
 
-Persistence, authentication, HA scene entities, Matter, music/audio input, transition profiling, power control, WebSocket telemetry, React UI, timeline/keyframe editing, automatic reconnect/discovery cache, robust async verification, adaptive scheduling and comprehensive metrics.
+Persistence, authentication, HA scene entities, Matter, music/audio input, transition profiling, WebSocket telemetry, React UI, timeline/keyframe editing, periodic background rediscovery, continuous fire-and-verify during playback, adaptive scheduling and comprehensive metrics.
+
+Implemented since the starter: opt-in power control, devStatus requests, discovery cache with MAC-derived IDs, per-device error backoff and diagnostics, a fire-and-verify benchmark (`light_engine.bench`) and a protocol-level fake bulb (`light_engine.fakebulb`) for tests.

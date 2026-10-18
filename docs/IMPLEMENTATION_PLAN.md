@@ -6,19 +6,20 @@
 - [x] Per-device bounded scheduler + simulation transport
 - [x] Govee documented UDP write adapter and read-only discovery utility
 - [x] Baseline tests, lint and Docker simulation
-- [ ] Confirm CI green on GitHub and repair any failures
-- [ ] Verify dependencies and quickstart on the desktop agent's environment
+- [x] Confirm CI green on GitHub and repair any failures
+- [x] Verify dependencies and quickstart on the desktop agent's environment (Windows 11, Python 3.14.3, 2026-10-17)
 
 Acceptance: clean checkout passes checks, starts without hardware, demonstrates four virtual fixtures and Start/Stop.
 
 ## Phase 1 - Safe real-device communication
 - [ ] Verify LAN Control toggle and actual H6004 SKU/version on at least one bulb
-- [ ] Implement explicit power on/off REST action with opt-in policy
-- [ ] Add status-response listener on UDP 4002 with scoped discovery, timeouts and verification
-- [ ] Add persistent device discovery cache and stable device IDs
-- [ ] Improve network error handling: dropped devices, retries/backoff, recovery and diagnostics
+- [x] Implement explicit power on/off REST action with opt-in policy (simulation + fake bulb only)
+- [x] Add status-response listener on UDP 4002 with scoped discovery, timeouts and verification (fake bulb only)
+- [x] Add persistent device discovery cache and stable device IDs
+- [x] Improve network error handling: dropped devices, retries/backoff, recovery and diagnostics (no retries by design: a missed frame is superseded by the next)
 - [ ] Benchmark one bulb (RGB vs brightness updates) then four: sustainable update rate, dropped datagrams, perceived fade quality and drift
-- [ ] Write reproducible manual hardware acceptance script and result template
+- [x] Benchmark tool written: `python -m light_engine.bench` (exercised against fake bulb only; real measurements still open above)
+- [x] Write reproducible manual hardware acceptance script and result template (docs/HARDWARE_TEST.md)
 - [ ] Address command spacing and network behavior using measurement rather than optimistic assumptions
 
 Acceptance: single bulb can run a 10-minute pulse/recolor test, stop cleanly, no accumulating queue, and recorded observed delivery rate, model and firmware. Four bulbs next.

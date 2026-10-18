@@ -41,10 +41,9 @@ The Docker Compose port is bound to localhost only.
 2. Put the Linux machine on the same trusted subnet, preferably Ethernet.
 3. Run discovery from native Linux (not from a Docker bridge):
 
-       python -m light_engine.discovery
+       python -m light_engine.discovery --write devices.json
 
-   Verify the returned IP and sku. Multicast discovery may require UDP 4001/4002 access.
-4. Copy devices.json.example to devices.json and replace example addresses with verified private-LAN addresses. This file is gitignored.
+   Verify the returned IP and sku. Multicast discovery may require UDP 4001/4002 access. `--write` merges results into devices.json (gitignored) with stable `govee-<mac>` IDs; rerunning it after a DHCP change updates IPs and keeps your names. You can also copy devices.json.example by hand.
 5. Stop the simulation server. In the same shell, set:
 
        export LIGHT_ENGINE_MODE=lan
@@ -52,8 +51,12 @@ The Docker Compose port is bound to localhost only.
        export LIGHT_ENGINE_MAX_HZ=3
        uvicorn light_engine.api:app --host 127.0.0.1 --port 8765
 
-   In PowerShell use $env:LIGHT_ENGINE_MODE="lan", etc. The initial controller does not send a power-on command. Turn the test bulb on in Govee Home before running an effect.
-6. Begin with ONE bulb and a low-speed pulse. Measure packet delivery and observed animation smoothness. Expand to four after validation.
+   In PowerShell use $env:LIGHT_ENGINE_MODE="lan", etc. Effects never send a power-on command. Turn the test bulb on in Govee Home before running an effect, or set `LIGHT_ENGINE_ALLOW_POWER=1` to enable the explicit power endpoint and UI buttons.
+6. Begin with ONE bulb. Follow docs/HARDWARE_TEST.md: status read, then `python -m light_engine.bench` to measure which update rate the bulb actually applies, then a 10-minute pulse soak. Expand to four after validation.
+
+The LAN-mode server and the discovery and benchmark tools all listen on UDP 4002, so run only one of them at a time.
+
+To rehearse LAN mode without a bulb, `python -m light_engine.fakebulb` emulates the documented protocol on a loopback address. It is a test double, not evidence of real-device behavior.
 
 CAUTION: Govee LAN UDP uses no authentication or encryption. Keep the control service and bulbs on a trusted/segmented LAN. Do not expose UDP 4001-4003 or port 8765 to the public internet. The app does not yet implement user authentication; do not bind it to 0.0.0.0 on a shared network without an authenticated reverse proxy.
 
@@ -62,6 +65,9 @@ CAUTION: Govee LAN UDP uses no authentication or encryption. Keep the control se
 - GET /health
 - GET /api/devices
 - GET /api/effects
+- GET /api/devices/{id}/status: asks the device for its state (devStatus in LAN mode); 504 if it does not answer
+- POST /api/devices/{id}/power `{"on": true}`: 403 unless LIGHT_ENGINE_ALLOW_POWER=1, 409 while playback owns the device
+- GET /api/diagnostics: per-device send/error counters and backoff state
 - GET /api/playback
 - POST /api/playback/start
 - POST /api/playback/stop
@@ -72,7 +78,7 @@ Example:
       -H "Content-Type: application/json" \
       -d '{"effect":"pulse","brightness":70,"minimum_brightness":12,"speed":1,"device_ids":["bulb-1"]}'
 
-A stop request suspends animation without powering bulbs off. No persistence, scenes, home automation integration, or device state reconciliation have been implemented.
+A stop request suspends animation without powering bulbs off. A device that keeps failing is backed off exponentially (capped at 30 s) and resumes with the current frame, never a backlog. No persistence, scenes, home automation integration, or device state reconciliation have been implemented.
 
 ## Development
 
@@ -80,7 +86,7 @@ A stop request suspends animation without powering bulbs off. No persistence, sc
     ruff check .
     pytest -q
 
-The unit and API tests run entirely in simulation. Continuous integration runs those checks on pushes and pull requests. Physical timing, H6004 compatibility, color fidelity, and reliability are unverified.
+The unit and API tests run in simulation or over loopback UDP against the fake bulb; no real device is contacted. Continuous integration runs those checks on pushes and pull requests. Physical timing, H6004 compatibility, color fidelity, and reliability are unverified.
 
 ## Agent handoff
 

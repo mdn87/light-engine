@@ -15,6 +15,7 @@ button{cursor:pointer}button:hover{background:#384256}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .fixture{display:flex;align-items:center;flex-direction:column;text-align:center;gap:8px;padding:10px;background:#272c37;border-radius:12px}
 .orb{width:47px;height:47px;background:#e6a64e;box-shadow:0 0 22px #e6a64e80;border-radius:50%}
+.mini{padding:5px 9px;font-size:13px}.row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 small,pre{color:#aab0bf}pre{white-space:pre-wrap;overflow-wrap:anywhere}
 @media(max-width:510px){.grid{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -37,27 +38,41 @@ small,pre{color:#aab0bf}pre{white-space:pre-wrap;overflow-wrap:anywhere}
 <div class="actions"><button id="start">Start</button><button id="stop">Stop</button></div>
 <pre id="status">Idle</pre>
 </section>
+<section>
+<h2>Diagnostics</h2><pre id="diagnostics">Loading...</pre>
+</section>
 </main>
 <script>
 const fields=['hue','speed','brightness','minimum_brightness','phase_spread'];
-let devices=[];
+let devices=[];let powerControl=false;
 async function request(path,method='GET',body) {
   const response=await fetch(path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
   const content=await response.json();if(!response.ok)throw Error(JSON.stringify(content));return content;
 }
 function selected(){return Array.from(document.querySelectorAll('input[name=target]:checked')).map(x=>x.value)}
 async function init(){
+  powerControl=(await request('/health')).power_control;
   devices=await request('/api/devices');
   document.querySelector('#devices').innerHTML='';
   for(const device of devices){
-    const node=document.createElement('label');node.className='fixture';
+    const node=document.createElement('div');node.className='fixture';
+    const pick=document.createElement('label');
     const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.name='target';checkbox.value=device.id;checkbox.checked=true;
     const orb=document.createElement('div');orb.className='orb';orb.id='orb-'+device.id;
     const name=document.createElement('small');name.textContent=device.name;
-    node.append(checkbox,orb,name);document.querySelector('#devices').append(node);
+    const info=document.createElement('small');info.id='info-'+device.id;
+    const row=document.createElement('div');row.className='row';
+    row.append(button('Status',()=>showStatus(device.id)));
+    if(powerControl){row.append(button('On',()=>power(device.id,true)),button('Off',()=>power(device.id,false)))}
+    pick.append(checkbox,' ',name);node.append(orb,pick,row,info);document.querySelector('#devices').append(node);
   }
   await poll();
 }
+function button(text,handler){const b=document.createElement('button');b.className='mini';b.type='button';b.textContent=text;b.addEventListener('click',handler);return b}
+function info(id,text){document.getElementById('info-'+id).textContent=text}
+async function showStatus(id){info(id,'Asking...');try{const s=await request('/api/devices/'+id+'/status');
+  info(id,(s.on?'On':'Off')+' · '+s.brightness+'% · rgb('+s.color.r+','+s.color.g+','+s.color.b+')')}catch(error){info(id,error.message)}}
+async function power(id,on){try{await request('/api/devices/'+id+'/power','POST',{on});info(id,on?'Sent on':'Sent off')}catch(error){info(id,error.message)}}
 fields.forEach(name=>{const el=document.getElementById(name);el.addEventListener('input',()=>{document.getElementById(name+'Value').textContent=el.value})});
 document.getElementById('start').addEventListener('click',async()=>{try{
   const payload={effect:document.getElementById('effect').value,device_ids:selected()};
@@ -75,6 +90,7 @@ async function poll(){
       const orb=document.getElementById('orb-'+device.id);
       if(frame){orb.style.background='rgb('+frame.r+','+frame.g+','+frame.b+')';orb.style.opacity=Math.max(.1,frame.brightness/100)}
     }
+    document.getElementById('diagnostics').textContent=JSON.stringify(await request('/api/diagnostics'),null,1);
   }catch(error){document.getElementById('status').textContent=error.message}
 }
 init().catch(error=>{document.getElementById('status').textContent=error.message});

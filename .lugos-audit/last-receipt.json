@@ -1,0 +1,96 @@
+{
+  "findings": [
+    {
+      "record_type": "audit_finding",
+      "schema_version": 1,
+      "check_id": "git.conflict-markers",
+      "category": "repository-hygiene",
+      "verdict": "pass",
+      "blocking": true,
+      "severity": "info",
+      "subject": {
+        "repository": "mdn87/light-engine",
+        "revision": "e0a808f64ca87faba3adfa1d58f23007d6430ef2",
+        "working_tree_digest": "9b5ecfe4ef114d1de0072a5aef510c6e30bb2d2f1f22a23141ba4ba908d574be"
+      },
+      "tool": {
+        "name": "lugos-native",
+        "version": "0.2.0",
+        "duration_ms": 2
+      },
+      "evidence": []
+    },
+    {
+      "record_type": "audit_finding",
+      "schema_version": 1,
+      "check_id": "code.encoding",
+      "category": "code-quality",
+      "verdict": "pass",
+      "blocking": false,
+      "severity": "info",
+      "subject": {
+        "repository": "mdn87/light-engine",
+        "revision": "e0a808f64ca87faba3adfa1d58f23007d6430ef2",
+        "working_tree_digest": "9b5ecfe4ef114d1de0072a5aef510c6e30bb2d2f1f22a23141ba4ba908d574be"
+      },
+      "tool": {
+        "name": "lugos-native",
+        "version": "0.2.0",
+        "duration_ms": 1
+      },
+      "evidence": []
+    },
+    {
+      "record_type": "audit_finding",
+      "schema_version": 1,
+      "check_id": "security.secret-patterns",
+      "category": "secret-detection",
+      "verdict": "pass",
+      "blocking": true,
+      "severity": "info",
+      "subject": {
+        "repository": "mdn87/light-engine",
+        "revision": "e0a808f64ca87faba3adfa1d58f23007d6430ef2",
+        "working_tree_digest": "9b5ecfe4ef114d1de0072a5aef510c6e30bb2d2f1f22a23141ba4ba908d574be"
+      },
+      "tool": {
+        "name": "lugos-native",
+        "version": "0.2.0",
+        "duration_ms": 4
+      },
+      "evidence": []
+    }
+  ],
+  "receipt": {
+    "record_type": "audit_receipt",
+    "schema_version": 1,
+    "receipt_id": "receipt-d5c625e709b2",
+    "profile": "quick",
+    "status": "valid",
+    "subject": {
+      "repository": "mdn87/light-engine",
+      "revision": "e0a808f64ca87faba3adfa1d58f23007d6430ef2",
+      "working_tree_digest": "9b5ecfe4ef114d1de0072a5aef510c6e30bb2d2f1f22a23141ba4ba908d574be"
+    },
+    "check_set": {
+      "id": "cormac-default",
+      "version": "0.2.0"
+    },
+    "tool_versions": [
+      {
+        "name": "lugos-native",
+        "version": "0.2.0"
+      }
+    ],
+    "findings_digest": "b5fd94dd4bc246ebbca1501d5878fce977c7eb01a481bad3615e282d73023fbe",
+    "created_at": "2026-10-18T02:35:26Z",
+    "receipt_sha256": "addd0b694c3b655b3da66ccf2b7b1a53206f2be6f158a05ca86c5ff60aa0d095",
+    "findings_summary": {
+      "total": 3,
+      "pass": 3,
+      "fail": 0,
+      "unchecked": 0,
+      "not_applicable": 0
+    }
+  }
+}

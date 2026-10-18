@@ -11,6 +11,7 @@ class Device:
     name: str
     ip: str | None = None
     sku: str = "H6004"
+    mac: str | None = None
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,25 @@ class Frame:
         return {"r": self.r, "g": self.g, "b": self.b, "brightness": self.brightness}
 
 
+@dataclass(frozen=True)
+class DeviceStatus:
+    """State a device reports about itself (Govee devStatus)."""
+    on: bool
+    brightness: int
+    r: int
+    g: int
+    b: int
+    color_temp_kelvin: int = 0
+
+    def as_dict(self) -> dict:
+        return {
+            "on": self.on,
+            "brightness": self.brightness,
+            "color": {"r": self.r, "g": self.g, "b": self.b},
+            "color_temp_kelvin": self.color_temp_kelvin,
+        }
+
+
 EffectName = Literal["pulse", "rainbow", "fire", "chase"]
 
 
@@ -35,6 +55,10 @@ class StartRequest(BaseModel):
     brightness: int = Field(default=80, ge=1, le=100)
     minimum_brightness: int = Field(default=10, ge=1, le=100)
     phase_spread: float = Field(default=0.25, ge=0, le=1)
+
+
+class PowerRequest(BaseModel):
+    on: bool
 
 
 EFFECT_NAMES: tuple[EffectName, ...] = ("pulse", "rainbow", "fire", "chase")
