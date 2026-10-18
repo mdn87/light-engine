@@ -9,6 +9,7 @@ contacted. LAN Control availability on the actual units is still unverified.
 
 ## Verified (how)
 - [x] GitHub CI passes install, ruff, compileall and pytest on the starter (run 39089150903, commit e45b8dd4)
+- [x] GitHub CI green on this session's work: ruff clean, 30 passed on Linux (run 39090654305, commit 1138b12)
 - [x] Local quickstart on Windows 11, Python 3.14.3, ruff 0.17.1: `ruff check .` clean, `pytest -q` 30 passed
 - [x] Local simulation server: /health, start chase on four bulbs, frames advancing, stop (curl)
 - [x] Browser UI in Chrome: four animated orbs, Start, per-bulb Status, Off refused with 409 while playback owns the bulb, diagnostics panel, no console errors
