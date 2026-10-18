@@ -78,7 +78,9 @@ Example:
       -H "Content-Type: application/json" \
       -d '{"effect":"pulse","brightness":70,"minimum_brightness":12,"speed":1,"device_ids":["bulb-1"]}'
 
-A stop request suspends animation without powering bulbs off. A device that keeps failing is backed off exponentially (capped at 30 s) and resumes with the current frame, never a backlog. No persistence, scenes, home automation integration, or device state reconciliation have been implemented.
+For synced patterns across several bulbs (keyframe timelines, waves, layout positions) see docs/TIMELINE.md. Invalid playback parameters return 422; unknown or duplicate device IDs return 400.
+
+A stop request suspends animation without powering bulbs off. A device that keeps failing is backed off exponentially (capped at 30 s) and resumes with the current frame, never a backlog. No persistence, saved scenes, home automation integration, or device state reconciliation have been implemented.
 
 ## Development
 

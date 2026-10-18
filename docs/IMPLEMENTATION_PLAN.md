@@ -27,7 +27,7 @@ Acceptance: single bulb can run a 10-minute pulse/recolor test, stop cleanly, no
 ## Phase 2 - Engine correctness and reliability
 - [ ] Design an explicit per-fixture ownership/arbitration state machine
 - [ ] Separate render tick from transport output tick; simulate 30 FPS preview while output at measured rate
-- [ ] Keep global monotonic timebase for coherent multi-bulb phase offsets
+- [x] Keep global monotonic timebase for coherent multi-bulb phase offsets (layout positions, concurrent sends; docs/TIMELINE.md)
 - [ ] Add presets/scenes persisted to SQLite + schema migration
 - [ ] Unattended startup behavior, watchdog/health checks, graceful shutdown, restart policy
 - [ ] Telemetry: desired vs observed state, errors, send cadence and queue age
@@ -41,7 +41,7 @@ Acceptance: simulation reliability test over hours and real repeated Start/Stop 
 - [ ] Preset library with versioned serialized effect parameters
 - [ ] Responsive mobile-friendly layout
 - [ ] Authenticated access over LAN/VPN with documented onboarding
-- [ ] Keyframe curve support (easing, hold, loop, clip offset)
+- [x] Keyframe curve support: engine side done (linear/smooth/step easing, loop/ping_pong/once, per-position offset); editor UI still open
 - [ ] Accessibility and reduced-motion controls for browser visualization
 
 Acceptance: create, preview, save and launch a lighting scene from desktop and phone without editing JSON.

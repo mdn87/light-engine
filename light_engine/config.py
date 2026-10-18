@@ -28,6 +28,10 @@ def load_devices(path: str | Path) -> list[Device]:
         unknown = set(value) - DEVICE_FIELDS
         if unknown:
             raise ValueError(f"Unknown device fields: {', '.join(sorted(unknown))}")
+        position = value.get("position")
+        if position is not None and (isinstance(position, bool)
+                                     or not isinstance(position, (int, float))):
+            raise TypeError("Device position must be a number")
         device = Device(**value)
         if not device.ip or not ipaddress.ip_address(device.ip).is_private:
             raise ValueError("Only private-network IP addresses are accepted in LAN mode")

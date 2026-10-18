@@ -29,6 +29,7 @@ class FakeGoveeBulb(asyncio.DatagramProtocol):
         self.color = {"r": 255, "g": 255, "b": 255}
         self.color_temp = 0
         self.received: list[tuple[str, dict]] = []
+        self.received_at: list[float] = []  # monotonic arrival time of each received entry
         self.dropped = 0
         self._arrivals: list[float] = []
         self.transport: asyncio.DatagramTransport | None = None
@@ -66,6 +67,7 @@ class FakeGoveeBulb(asyncio.DatagramProtocol):
             self.dropped += 1
             return
         self.received.append((command, payload))
+        self.received_at.append(time.monotonic())
         if command == "turn":
             self.on = bool(payload.get("value"))
         elif command == "brightness":

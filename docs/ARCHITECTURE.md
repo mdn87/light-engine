@@ -10,8 +10,8 @@ Simpler initial path: run this Python app natively on a Linux machine or Debian 
 
 Browser -> FastAPI -> playback state -> pure effect generator -> bounded scheduler -> device-specific transport -> bulbs.
 
-- Effects: mathematical function of monotonic elapsed time, fixture index, user parameters; no I/O.
-- Engine: one owner per fixture; global monotonic epoch, per-fixture update frequency, skip unchanged frames and coalesce stale frames.
+- Effects: mathematical function of monotonic elapsed time, fixture layout position, user parameters (including keyframe timelines); no I/O. See TIMELINE.md.
+- Engine: one owner per fixture; global monotonic epoch, per-fixture update frequency, skip unchanged frames and coalesce stale frames. Frames are chosen under the lock and sent concurrently outside it; a bulb with a send in flight is skipped.
 - Transports: protocol adapters; in-memory simulation and initial Govee LAN UDP.
 - HTTP: validation and control, not a source of time-critical animation frames.
 - UI: initial single-page non-framework controller; future React/TypeScript visual editor can replace it without rewriting effect evaluation.
@@ -50,6 +50,6 @@ HA is ideal for sensors, automation and general device management, but is not th
 
 ## Not yet implemented
 
-Persistence, authentication, HA scene entities, Matter, music/audio input, transition profiling, WebSocket telemetry, React UI, timeline/keyframe editing, periodic background rediscovery, continuous fire-and-verify during playback, adaptive scheduling and comprehensive metrics.
+Persistence, authentication, HA scene entities, Matter, music/audio input, transition profiling, WebSocket telemetry, React UI, a visual timeline/keyframe editor (engine-side timelines exist, see TIMELINE.md), periodic background rediscovery, continuous fire-and-verify during playback, adaptive scheduling and comprehensive metrics.
 
 Implemented since the starter: opt-in power control, devStatus requests, discovery cache with MAC-derived IDs, per-device error backoff and diagnostics, a fire-and-verify benchmark (`light_engine.bench`) and a protocol-level fake bulb (`light_engine.fakebulb`) for tests.

@@ -24,6 +24,9 @@ def test_load_devices_accepts_mac_and_rejects_bad_entries(tmp_path):
         load_devices(write(tmp_path, [{**good, "ip": "8.8.8.8"}]))
     with pytest.raises(ValueError, match="private-network"):
         load_devices(write(tmp_path, [{"id": "a", "name": "A"}]))
+    assert load_devices(write(tmp_path, [{**good, "position": 2.5}]))[0].position == 2.5
+    with pytest.raises(TypeError, match="position"):
+        load_devices(write(tmp_path, [{**good, "position": "left"}]))
 
 
 def test_power_control_is_opt_in(monkeypatch):

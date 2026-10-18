@@ -29,7 +29,7 @@ small,pre{color:#aab0bf}pre{white-space:pre-wrap;overflow-wrap:anywhere}
 <section>
 <h2>Effect</h2>
 <label for="effect">Animation</label>
-<select id="effect"><option value="pulse">Breathing / pulse</option><option value="rainbow">Rainbow</option><option value="fire">Fire flicker</option><option value="chase">Chase / wave</option></select>
+<select id="effect"><option value="pulse">Breathing / pulse</option><option value="rainbow">Rainbow</option><option value="fire">Fire flicker</option><option value="chase">Chase / wave</option><option value="timeline">Timeline wave (demo keyframes)</option></select>
 <label for="hue">Hue: <output id="hueValue">28</output>°</label><input id="hue" type="range" min="0" max="360" value="28">
 <label for="speed">Speed: <output id="speedValue">1</output>x</label><input id="speed" type="range" min="0.1" max="5" step="0.1" value="1">
 <label for="brightness">Maximum brightness: <output id="brightnessValue">80</output>%</label><input id="brightness" type="range" min="1" max="100" value="80">
@@ -44,6 +44,8 @@ small,pre{color:#aab0bf}pre{white-space:pre-wrap;overflow-wrap:anywhere}
 </main>
 <script>
 const fields=['hue','speed','brightness','minimum_brightness','phase_spread'];
+// Demo timeline: amber, red, violet and back over 6 s. Phase spacing staggers it into a wave.
+const demoKeyframes=[{t:0,hue:30,brightness:80},{t:2,hue:0,brightness:40},{t:4,hue:280,brightness:90},{t:6,hue:30,brightness:80}];
 let devices=[];let powerControl=false;
 async function request(path,method='GET',body) {
   const response=await fetch(path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
@@ -78,6 +80,7 @@ document.getElementById('start').addEventListener('click',async()=>{try{
   const payload={effect:document.getElementById('effect').value,device_ids:selected()};
   if(!payload.device_ids.length)throw Error('Select at least one bulb');
   for(const key of fields)payload[key]=Number(document.getElementById(key).value);
+  if(payload.effect==='timeline')payload.keyframes=demoKeyframes;
   await request('/api/playback/start','POST',payload);await poll();
 }catch(error){document.getElementById('status').textContent=error.message}});
 document.getElementById('stop').addEventListener('click',async()=>{await request('/api/playback/stop','POST');await poll()});

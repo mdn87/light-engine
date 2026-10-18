@@ -199,3 +199,23 @@ def test_discovery_against_fake_responder():
     assert found[0]["device"] == "11:22:33:44:55:66"
     assert found[0]["ip"] == "127.0.0.2"
     assert found[0]["sku"] == "H6004"
+
+
+def test_four_bulbs_receive_the_same_tick_together():
+    """With a 25 ms command gap, serial sends put bulb 4 about 3 gaps behind bulb 1."""
+    async def scenario():
+        hosts = ("127.0.0.2", "127.0.0.3", "127.0.0.4", "127.0.0.5")
+        transport, bulbs, devices = await lan_setup(hosts=hosts, gap=0.025)
+        try:
+            engine = LightingEngine(devices, transport, max_hz=3)
+            await engine.start(StartRequest(effect="rainbow"))
+            await engine.step(engine.started_at)
+            await asyncio.sleep(0.05)
+            firsts = [bulb.received_at[0] for bulb in bulbs]
+            return max(firsts) - min(firsts), [len(bulb.received) for bulb in bulbs]
+        finally:
+            close_all(transport, bulbs)
+
+    skew, counts = asyncio.run(scenario())
+    assert counts == [2, 2, 2, 2]                      # colour + brightness each
+    assert skew < 0.015

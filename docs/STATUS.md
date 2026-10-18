@@ -16,6 +16,7 @@ contacted. LAN Control availability on the actual units is still unverified.
 - [x] Engine drives four fake bulbs on 127.0.0.2-5 over UDP; devStatus read-back matches the last frame (tests/test_lan.py)
 - [x] 25 ms command gap prevents the documented third-command drop; 0 ms gap reproduces it on the fake (test)
 - [x] Benchmark CLI against fake-bulb CLI: 5 Hz target, 4.994 Hz achieved, 15/15 updates verified, state restored
+- [x] Synced timeline: four simulated bulbs play one keyframe timeline a quarter-cycle apart (live API probe); four fake bulbs on UDP receive a tick within 15 ms of each other with a 25 ms gap, versus 94 ms with the old serial loop (tests/test_lan.py)
 - [ ] One physical H6004 identified with successful LAN discovery
 - [ ] devStatus reply observed from a real bulb
 - [ ] RGB and brightness packet application observed
@@ -32,6 +33,13 @@ contacted. LAN Control availability on the actual units is still unverified.
 - Device file validation: unknown fields, duplicate IPs
 - `light_engine.bench` fire-and-verify benchmark; `light_engine.fakebulb` protocol emulator
 - docs/HARDWARE_TEST.md acceptance script and result template
+
+## Added: synced timelines (docs/TIMELINE.md)
+- `effect: "timeline"` with keyframes (linear, smooth, step easing; loop, ping_pong, once); pure `sample()`
+- Per-device `position` in the devices file for wave order, gaps and grouped bulbs
+- Sends happen outside the engine lock and concurrently across bulbs; in-flight bulbs are skipped; stale sends after a restart are ignored
+- Playback validation moved into `StartRequest`: bad parameters now return 422 instead of 400
+- Design came from a roundtable review; the rest of its shortlist is listed in docs/TIMELINE.md
 
 ## Blocked on hardware (needs Matt, about 15 minutes)
 Blocked: the remaining Phase 1 items need a powered H6004 on the LAN. Smallest useful step:
