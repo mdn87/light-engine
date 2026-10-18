@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Light Engine</title>
+<style>
+:root {font:16px system-ui,sans-serif;color-scheme:dark;background:#101116;color:#eef0f6}
+body{margin:0;padding:32px 16px}main{max-width:780px;margin:auto}
+h1{margin-bottom:0}p{color:#afb5c4}section{background:#1b1d25;border:1px solid #373c4a;border-radius:16px;padding:22px;margin:20px 0}
+label{display:block;margin:16px 0 7px}input[type=range],select{width:100%}
+select,button{background:#2a3040;color:#fff;border:1px solid #535a6b;padding:11px;border-radius:9px}
+button{cursor:pointer}button:hover{background:#384256}
+.actions{display:flex;gap:10px;margin:20px 0}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.fixture{display:flex;align-items:center;flex-direction:column;text-align:center;gap:8px;padding:10px;background:#272c37;border-radius:12px}
+.orb{width:47px;height:47px;background:#e6a64e;box-shadow:0 0 22px #e6a64e80;border-radius:50%}
+.mini{padding:5px 9px;font-size:13px}.row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+small,pre{color:#aab0bf}pre{white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:510px){.grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body><main>
+<h1>Light Engine</h1>
+<p>Local lighting controls. Simulation by default; hardware control requires explicit setup.</p>
+<section>
+<h2>Devices</h2><div id="devices" class="grid">Loading...</div>
+</section>
+<section>
+<h2>Effect</h2>
+<label for="effect">Animation</label>
+<select id="effect"><option value="pulse">Breathing / pulse</option><option value="rainbow">Rainbow</option><option value="fire">Fire flicker</option><option value="chase">Chase / wave</option><option value="timeline">Timeline wave (demo keyframes)</option></select>
+<label for="hue">Hue: <output id="hueValue">28</output>°</label><input id="hue" type="range" min="0" max="360" value="28">
+<label for="speed">Speed: <output id="speedValue">1</output>x</label><input id="speed" type="range" min="0.1" max="5" step="0.1" value="1">
+<label for="brightness">Maximum brightness: <output id="brightnessValue">80</output>%</label><input id="brightness" type="range" min="1" max="100" value="80">
+<label for="minimum_brightness">Minimum brightness: <output id="minimum_brightnessValue">10</output>%</label><input id="minimum_brightness" type="range" min="1" max="100" value="10">
+<label for="phase_spread">Phase spacing: <output id="phase_spreadValue">0.25</output></label><input id="phase_spread" type="range" min="0" max="1" step="0.05" value="0.25">
+<div class="actions"><button id="start">Start</button><button id="stop">Stop</button></div>
+<pre id="status">Idle</pre>
+</section>
+<section>
+<h2>Diagnostics</h2><pre id="diagnostics">Loading...</pre>
+</section>
+</main>
+<script>
+const fields=['hue','speed','brightness','minimum_brightness','phase_spread'];
+// Demo timeline: amber, red, violet and back over 6 s. Phase spacing staggers it into a wave.
+const demoKeyframes=[{t:0,hue:30,brightness:80},{t:2,hue:0,brightness:40},{t:4,hue:280,brightness:90},{t:6,hue:30,brightness:80}];
+let devices=[];let powerControl=false;
+async function request(path,method='GET',body) {
+  const response=await fetch(path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+  const content=await response.json();if(!response.ok)throw Error(JSON.stringify(content));return content;
+}
+function selected(){return Array.from(document.querySelectorAll('input[name=target]:checked')).map(x=>x.value)}
+async function init(){
+  powerControl=(await request('/health')).power_control;
+  devices=await request('/api/devices');
+  document.querySelector('#devices').innerHTML='';
+  for(const device of devices){
+    const node=document.createElement('div');node.className='fixture';
+    const pick=document.createElement('label');
+    const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.name='target';checkbox.value=device.id;checkbox.checked=true;
+    const orb=document.createElement('div');orb.className='orb';orb.id='orb-'+device.id;
+    const name=document.createElement('small');name.textContent=device.name;
+    const info=document.createElement('small');info.id='info-'+device.id;
+    const row=document.createElement('div');row.className='row';
+    row.append(button('Status',()=>showStatus(device.id)));
+    if(powerControl){row.append(button('On',()=>power(device.id,true)),button('Off',()=>power(device.id,false)))}
+    pick.append(checkbox,' ',name);node.append(orb,pick,row,info);document.querySelector('#devices').append(node);
+  }
+  await poll();
+}
+function button(text,handler){const b=document.createElement('button');b.className='mini';b.type='button';b.textContent=text;b.addEventListener('click',handler);return b}
+function info(id,text){document.getElementById('info-'+id).textContent=text}
+async function showStatus(id){info(id,'Asking...');try{const s=await request('/api/devices/'+id+'/status');
+  info(id,(s.on?'On':'Off')+' · '+s.brightness+'% · rgb('+s.color.r+','+s.color.g+','+s.color.b+')')}catch(error){info(id,error.message)}}
+async function power(id,on){try{await request('/api/devices/'+id+'/power','POST',{on});info(id,on?'Sent on':'Sent off')}catch(error){info(id,error.message)}}
+fields.forEach(name=>{const el=document.getElementById(name);el.addEventListener('input',()=>{document.getElementById(name+'Value').textContent=el.value})});
+document.getElementById('start').addEventListener('click',async()=>{try{
+  const payload={effect:document.getElementById('effect').value,device_ids:selected()};
+  if(!payload.device_ids.length)throw Error('Select at least one bulb');
+  for(const key of fields)payload[key]=Number(document.getElementById(key).value);
+  if(payload.effect==='timeline')payload.keyframes=demoKeyframes;
+  await request('/api/playback/start','POST',payload);await poll();
+}catch(error){document.getElementById('status').textContent=error.message}});
+document.getElementById('stop').addEventListener('click',async()=>{await request('/api/playback/stop','POST');await poll()});
+async function poll(){
+  try{
+    const state=await request('/api/playback');
+    document.getElementById('status').textContent=state.running?'Playing '+state.playback.effect:(state.last_error||'Stopped');
+    for(const device of devices){
+      const frame=state.last_frames[device.id];
+      const orb=document.getElementById('orb-'+device.id);
+      if(frame){orb.style.background='rgb('+frame.r+','+frame.g+','+frame.b+')';orb.style.opacity=Math.max(.1,frame.brightness/100)}
+    }
+    document.getElementById('diagnostics').textContent=JSON.stringify(await request('/api/diagnostics'),null,1);
+  }catch(error){document.getElementById('status').textContent=error.message}
+}
+init().catch(error=>{document.getElementById('status').textContent=error.message});
+setInterval(poll,500);
+</script>
+</body></html>

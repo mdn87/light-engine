@@ -1,0 +1,11 @@
+services:
+  light-engine:
+    build: .
+    restart: unless-stopped
+    environment:
+      LIGHT_ENGINE_MODE: simulation
+      LIGHT_ENGINE_MAX_HZ: "3"
+    ports:
+      - "127.0.0.1:8765:8765"
+    # Deliberately simulation-only. Native Linux host networking is recommended
+    # for first Govee discovery and LAN measurements; do not expose port 8765.

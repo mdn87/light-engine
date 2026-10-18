@@ -1,0 +1,102 @@
+"""HTTP interface. Bind localhost until an authenticated reverse proxy exists."""
+import asyncio
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+
+from .config import build_engine
+from .engine import ConflictError, LightingEngine, PolicyError
+from .models import EFFECT_NAMES, PowerRequest, StartRequest
+
+WEB_FILE = Path(__file__).resolve().parent.parent / "web" / "index.html"
+
+
+def make_app(engine: LightingEngine | None = None) -> FastAPI:
+    engine = engine or build_engine()
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        task = asyncio.create_task(engine.run())
+        try:
+            yield
+        finally:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+            close = getattr(engine.transport, "close", None)
+            if close:
+                close()
+
+    app = FastAPI(title="Light Engine", version="0.1.0", lifespan=lifespan)
+
+    @app.get("/")
+    def home():
+        return FileResponse(WEB_FILE)
+
+    @app.get("/health")
+    def health():
+        return {"ok": True, "devices": len(engine.devices), "power_control": engine.allow_power}
+
+    @app.get("/api/effects")
+    def effects():
+        return {"effects": list(EFFECT_NAMES)}
+
+    @app.get("/api/devices")
+    def devices():
+        return [
+            {"id": device.id, "name": device.name, "sku": device.sku, "ip": device.ip,
+             "mac": device.mac}
+            for device in engine.devices.values()
+        ]
+
+    @app.get("/api/devices/{device_id}/status")
+    async def device_status(device_id: str):
+        try:
+            return (await engine.device_status(device_id)).as_dict()
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=exc.args[0]) from exc
+        except TimeoutError as exc:
+            raise HTTPException(status_code=504, detail=str(exc)) from exc
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    @app.post("/api/devices/{device_id}/power")
+    async def power(device_id: str, request: PowerRequest):
+        try:
+            return await engine.set_power(device_id, request.on)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=exc.args[0]) from exc
+        except PolicyError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        except ConflictError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    @app.get("/api/diagnostics")
+    def diagnostics():
+        return engine.diagnostics()
+
+    @app.get("/api/playback")
+    def playback():
+        return engine.status()
+
+    @app.post("/api/playback/start")
+    async def start(config: StartRequest):
+        try:
+            return await engine.start(config)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/api/playback/stop")
+    async def stop():
+        return await engine.stop()
+
+    return app
+
+
+app = make_app()
