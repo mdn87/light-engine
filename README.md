@@ -35,6 +35,22 @@ Alternate simulation deployment:
 
 The Docker Compose port is bound to localhost only.
 
+## Runtime settings
+
+These settings contain no credentials. Simulation uses the defaults without a
+settings file. Set an override only in the shell that starts the process.
+
+| Setting | Default | Use |
+| --- | --- | --- |
+| `LIGHT_ENGINE_MODE` | `simulation` | Set to `lan` only after checking the physical device list. |
+| `LIGHT_ENGINE_MAX_HZ` | `3` | Maximum update rate per device. |
+| `LIGHT_ENGINE_COMMAND_GAP_MS` | `25` | Gap in milliseconds between commands to one LAN bulb. |
+| `LIGHT_ENGINE_ALLOW_POWER` | `0` | Set to `1` to enable the power endpoint. |
+| `LIGHT_ENGINE_DEVICES_FILE` | unset | Required in LAN mode; path to the verified device JSON file. |
+
+The service does not need a dotenv file. The LAN example below sets its
+nonsecret overrides only for the process being launched.
+
 ## First physical bulb (explicit opt-in)
 
 1. Open Govee Home and verify a bulb exposes the LAN Control toggle; enable it. H6004 support in ecosystem lists does not establish that this particular firmware and retail unit have LAN control enabled.
